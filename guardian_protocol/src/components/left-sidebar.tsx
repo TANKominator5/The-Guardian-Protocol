@@ -1,15 +1,18 @@
 "use client";
 
 import Link from "next/link";
-import { usePathname } from "next/navigation";
+import { usePathname, useRouter } from "next/navigation";
 import {
   LayoutDashboard,
   Users,
   AlertTriangle,
   Clock,
   Shield,
+  LogOut,
 } from "lucide-react";
 import { cn } from "@/lib/utils";
+import { supabase } from "@/lib/supabase";
+import { Button } from "./ui/button";
 
 const navItems = [
   {
@@ -36,6 +39,12 @@ const navItems = [
 
 export function LeftSidebar() {
   const pathname = usePathname();
+  const router = useRouter();
+
+  const handleLogout = async () => {
+    await supabase.auth.signOut();
+    router.push('/auth/signin');
+  };
 
   return (
     <aside className="w-64 border-r border-border bg-sidebar flex flex-col">
@@ -79,7 +88,15 @@ export function LeftSidebar() {
       </nav>
 
       {/* Footer */}
-      <div className="p-4 border-t border-sidebar-border">
+      <div className="p-4 border-t border-sidebar-border space-y-3">
+        <Button 
+          onClick={handleLogout}
+          variant="ghost"
+          className="w-full justify-start gap-3 text-sidebar-foreground hover:bg-sidebar-accent"
+        >
+          <LogOut className="w-5 h-5" />
+          <span>Logout</span>
+        </Button>
         <p className="text-xs text-sidebar-foreground/60">
           Campus Security System v1.0
         </p>

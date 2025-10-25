@@ -1,7 +1,7 @@
 import type React from "react";
 import type { Metadata } from "next";
 import { Geist, Geist_Mono } from "next/font/google";
-import { LeftSidebar } from "@/components/left-sidebar";
+import AuthProvider from "@/components/auth-provider";
 import "./globals.css";
 
 const _geist = Geist({ subsets: ["latin"] });
@@ -21,10 +21,7 @@ export default function RootLayout({
   return (
     <html lang="en">
       <body className={`font-sans antialiased`}>
-        <div className="flex h-screen bg-background">
-          <LeftSidebar />
-          <div className="flex-1 flex flex-col overflow-hidden">{children}</div>
-        </div>
+        <AuthProvider>{children}</AuthProvider>
       </body>
     </html>
   );

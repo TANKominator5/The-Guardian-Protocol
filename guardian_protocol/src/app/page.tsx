@@ -5,7 +5,7 @@ import { Clock, User } from "lucide-react";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
-import { supabase } from "../supabase/config";
+import { supabase } from "@/lib/supabase";
 
 interface Entry {
   entry_id: string;
