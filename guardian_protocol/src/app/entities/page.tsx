@@ -21,6 +21,17 @@ interface Entity {
   status: string;
   last_seen: string;
   location: any;
+  profiles: {
+    full_name?: string;
+    mobile_no?: number;
+    gender?: string;
+    department?: string;
+    course?: string;
+    roll_no?: string;
+    current_year?: string;
+    current_semester?: string;
+    room_id?: string;
+  };
 }
 
 export default function EntitiesPage() {
@@ -38,17 +49,45 @@ export default function EntitiesPage() {
       try {
         setLoading(true);
         setError(null);
-        
-        const { data, error } = await supabase
+
+        // First, get all entries
+        const { data: entriesData, error: entriesError } = await supabase
           .from('entry')
           .select('*')
           .order('last_seen', { ascending: false });
 
-        if (error) {
-          throw error;
+        if (entriesError) {
+          console.error('Supabase entries error:', entriesError);
+          throw entriesError;
         }
 
-        setEntities(data || []);
+        // Then, get all profiles
+        const { data: profilesData, error: profilesError } = await supabase
+          .from('profiles')
+          .select('*');
+
+        if (profilesError) {
+          console.error('Supabase profiles error:', profilesError);
+          throw profilesError;
+        }
+
+        // Manually join the data
+        const joinedData = entriesData?.map(entry => {
+          const profile = profilesData?.find(p => p.id === entry.user_id);
+          console.log(`Entry ${entry.entry_id} with user_id ${entry.user_id}:`, {
+            foundProfile: !!profile,
+            profile: profile
+          });
+          return {
+            ...entry,
+            profiles: profile || null
+          };
+        }) || [];
+
+        console.log('All entries:', entriesData);
+        console.log('All profiles:', profilesData);
+        console.log('Joined data:', joinedData);
+        setEntities(joinedData);
       } catch (err) {
         console.error('Error fetching entities:', err);
         setError(err instanceof Error ? err.message : 'Failed to fetch entities');
@@ -64,6 +103,9 @@ export default function EntitiesPage() {
     const matchesSearch =
       entry.entry_id.toLowerCase().includes(searchQuery.toLowerCase()) ||
       entry.user_id.toLowerCase().includes(searchQuery.toLowerCase()) ||
+      (entry.profiles?.full_name && entry.profiles.full_name.toLowerCase().includes(searchQuery.toLowerCase())) ||
+      (entry.profiles?.roll_no && entry.profiles.roll_no.toLowerCase().includes(searchQuery.toLowerCase())) ||
+      (entry.profiles?.department && entry.profiles.department.toLowerCase().includes(searchQuery.toLowerCase())) ||
       (entry.location && JSON.stringify(entry.location).toLowerCase().includes(searchQuery.toLowerCase()));
 
     const matchesStatus =
@@ -156,7 +198,7 @@ export default function EntitiesPage() {
             <div className="relative">
               <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 w-4 h-4 text-muted-foreground" />
               <Input
-                placeholder="Search by entry ID, user ID, or location..."
+                placeholder="Search by entry ID, name, roll number, or department..."
                 className="pl-10"
                 value={searchQuery}
                 onChange={(e) => setSearchQuery(e.target.value)}
@@ -205,9 +247,9 @@ export default function EntitiesPage() {
                 <AlertCircle className="w-12 h-12 text-red-500 mx-auto mb-4" />
                 <p className="text-red-600 font-semibold mb-2">Error loading entities</p>
                 <p className="text-muted-foreground">{error}</p>
-                <Button 
-                  onClick={() => window.location.reload()} 
-                  variant="outline" 
+                <Button
+                  onClick={() => window.location.reload()}
+                  variant="outline"
                   className="mt-4"
                 >
                   Retry
@@ -258,16 +300,18 @@ export default function EntitiesPage() {
                               {entry.entry_id}
                             </span>
                           </td>
-                        <td className="py-3 px-4">
-                          <div>
-                            <p className="font-semibold text-foreground">
-                              User ID: {entry.user_id}
-                            </p>
-                            <p className="text-xs text-muted-foreground">
-                              Entry ID: {entry.entry_id}
-                            </p>
-                          </div>
-                        </td>
+                          <td className="py-3 px-4">
+                            <div>
+                              <p className="font-semibold text-foreground">
+                                {entry.profiles?.full_name || `User: ${entry.user_id.slice(0, 8)}...`}
+                              </p>
+                              <p className="text-xs text-muted-foreground">
+                              {/* {entry.profiles?.roll_no && `Roll: ${entry.profiles.roll_no}`}
+                                {entry.profiles?.department && ` • ${entry.profiles.department}`} */}
+                                {!entry.profiles && `No profile found`}
+                              </p>
+                            </div>
+                          </td>
                           <td className="py-3 px-4">
                             <Badge
                               variant={
@@ -279,25 +323,25 @@ export default function EntitiesPage() {
                               {entry.status}
                             </Badge>
                           </td>
-                        <td className="py-3 px-4">
-                          <div className="flex items-center gap-2">
-                            <div className="w-16 bg-muted rounded-full h-2">
-                              <div
-                                className="bg-blue-500 h-2 rounded-full"
-                                style={{
-                                  width: '85%', // Default confidence for now
-                                }}
-                              />
+                          <td className="py-3 px-4">
+                            <div className="flex items-center gap-2">
+                              <div className="w-16 bg-muted rounded-full h-2">
+                                <div
+                                  className="bg-blue-500 h-2 rounded-full"
+                                  style={{
+                                    width: '85%', // Default confidence for now
+                                  }}
+                                />
+                              </div>
+                              <span className="text-xs font-semibold">
+                                85%
+                              </span>
                             </div>
-                            <span className="text-xs font-semibold">
-                              85%
-                            </span>
-                          </div>
-                        </td>
+                          </td>
                           <td className="py-3 px-4">
                             <span className="text-foreground">
-                              {entry.location ? 
-                                (typeof entry.location === 'string' ? entry.location : JSON.stringify(entry.location)) 
+                              {entry.location ?
+                                (typeof entry.location === 'string' ? entry.location : JSON.stringify(entry.location))
                                 : 'Unknown'
                               }
                             </span>
@@ -321,8 +365,8 @@ export default function EntitiesPage() {
                       <tr>
                         <td colSpan={7} className="py-8 text-center">
                           <p className="text-muted-foreground">
-                            {entities.length === 0 
-                              ? "No entities found in the database" 
+                            {entities.length === 0
+                              ? "No entities found in the database"
                               : "No entities found matching your search criteria"
                             }
                           </p>
