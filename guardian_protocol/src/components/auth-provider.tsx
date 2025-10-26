@@ -13,17 +13,18 @@ export default function AuthProvider({ children }: { children: React.ReactNode }
   useEffect(() => {
     const checkAuth = async () => {
       const { data: { session } } = await supabase.auth.getSession();
-      
+
       const isAuthPage = pathname?.startsWith('/auth');
-      
-      if (!session && !isAuthPage) {
-        // Not logged in and trying to access protected page
-        router.push('/auth/signin');
-      } else if (session && isAuthPage) {
-        // Already logged in but on auth page
+      const isLandingPage = pathname === '/landing';
+
+      if (!session && !isAuthPage && !isLandingPage) {
+        // Not logged in and trying to access a protected page
+        router.push('/landing');
+      } else if (session && (isAuthPage || isLandingPage)) {
+        // Already logged in but on auth or landing page
         router.push('/');
       }
-      
+
       setLoading(false);
     };
 
@@ -32,12 +33,13 @@ export default function AuthProvider({ children }: { children: React.ReactNode }
     // Listen for auth changes
     const { data: { subscription } } = supabase.auth.onAuthStateChange((event, session) => {
       const isAuthPage = pathname?.startsWith('/auth');
-      
-      if (event === 'SIGNED_IN' && isAuthPage) {
+      const isLandingPage = pathname === '/landing';
+
+      if (event === 'SIGNED_IN' && (isAuthPage || isLandingPage)) {
         router.push('/');
         router.refresh();
       } else if (event === 'SIGNED_OUT' && !isAuthPage) {
-        router.push('/auth/signin');
+        router.push('/landing');
       }
     });
 
