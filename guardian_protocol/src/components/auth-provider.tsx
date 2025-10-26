@@ -50,25 +50,27 @@ export default function AuthProvider({ children }: { children: React.ReactNode }
 
   if (loading) {
     return (
-      <div className="min-h-screen flex items-center justify-center bg-background">
-        <div className="text-center">
-          <div className="inline-block animate-spin rounded-full h-8 w-8 border-b-2 border-foreground"></div>
-          <p className="mt-4 text-muted-foreground">Loading...</p>
-        </div>
+      <div className="flex items-center justify-center min-h-screen">
+        <div className="animate-spin rounded-full h-12 w-12 border-t-2 border-b-2 border-primary"></div>
       </div>
     );
   }
 
   const isAuthPage = pathname?.startsWith('/auth');
+  const isLandingPage = pathname === '/landing';
 
-  if (isAuthPage) {
-    return <>{children}</>;
+  // For auth and landing pages, don't show the sidebar
+  if (isAuthPage || isLandingPage) {
+    return <div className="min-h-screen">{children}</div>;
   }
 
+  // For all other authenticated pages, show the sidebar
   return (
-    <div className="flex h-screen bg-background">
+    <div className="flex min-h-screen bg-background">
       <LeftSidebar />
-      <div className="flex-1 flex flex-col overflow-hidden">{children}</div>
+      <main className="flex-1 overflow-y-auto">
+        {children}
+      </main>
     </div>
   );
 }
