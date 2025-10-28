@@ -13,7 +13,7 @@ import {
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
-import { supabase } from "@/supabase/config";
+import { supabase } from "@/lib/supabase";
 
 interface Entity {
   entry_id: string;
