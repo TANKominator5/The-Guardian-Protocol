@@ -44,3 +44,12 @@ yarn.lock
 
 yarn-error.log
 
+
+# python `__pycache__` folders
+__pycache__/
+*.pyc
+*.pyo
+*.pyd
+
+# models
+*.pkl
